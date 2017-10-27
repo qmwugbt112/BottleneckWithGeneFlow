@@ -1,5 +1,5 @@
 # BottleneckWithGeneFlow
-R Code and example data from European Parakeets
+R Code and example-data from European Parakeets
 
 BottleneckFunctions.R contains a series of functions that can be used in the analysis of genetic data from post-bottleneck populations, to infer the rate of gene flow that has suplemented the population since the bottleneck.
 
