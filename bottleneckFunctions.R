@@ -115,10 +115,10 @@ drawCoal <- function(counts=testCounts,nAncest=4,u=10^-2){
 	
 	# if there are no coalsecent events return counts
 	if (nLineages == nAncest) {
-		return(list(uG=1,ancest=counts))
+		return(list(uG=0,ancest=counts))
 		}
 	if (nLineages == 0) {
-		return(list(uG=1,ancest=counts))
+		return(list(uG=0,ancest=counts))
 	}	
 	
 	# otherwise simulate required no coalescent events
