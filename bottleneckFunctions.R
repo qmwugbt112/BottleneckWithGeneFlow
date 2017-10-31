@@ -158,8 +158,8 @@ testN <- c(12,6,3)
 ###################################################################
 drawDistnFounders3<-function(
 	Ne2N=0.5,			# ratio of Ne to census size
-	meanMe=2.1,			# the average no diploid migrants per gen
-	Fst=testF,			# Fst describing variance of ancestral p around metapop
+	meanMe=2.1,			# the average no diploid migrants per gen (uncorrected to Ne)
+	Fst=testF,			# vector of Fst: var(ancestral freq) around metapop mean
 	pastN=testN,		# a vector of diploid census counts (present to founding)
 	gData=testDat,		# matrix 	1st col counts of each allele 
 						#			2nd col allele frequency (metapopulation) 
@@ -173,7 +173,7 @@ drawDistnFounders3<-function(
 		
 	# Inital calculations from input variables
 	nGens			<- length(pastN)			# no gens back to founding
-	Ne				<- Ne2N*(pastN)*2			# convert each popn size to Ne
+	Ne				<- Ne2N*(pastN)*2			# convert each popn size to 2Ne
 	pMigrant		<- meanMe/pastN				# proportion of migrants each gen
 	pMigrant[nGens]	<- 1 						# all founders were immigrants	
 	nAlleles		<- nrow(gData)				# num alleles (present or not)
