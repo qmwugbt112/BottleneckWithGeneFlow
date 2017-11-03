@@ -112,8 +112,8 @@ drawCoal <- function(counts=testCounts,nAncest=4,u=10^-2){
 
 #################################################
 testDat <- cbind(
-			c(0,7,0,5,9,0,0,0),
-			c(rep(0.2/6,6),0.4,0.4))
+			c(0,0,0,7,0,5,9,0,0,0),
+			c(rep(0.2/6,6),0.1,0.1,0.2,0.3))
 dimnames(testDat)<-list(NULL,c('counts','freqs'))			
 testF <- c(0:4/100)
 testN <- c(12,6,3)
@@ -265,5 +265,26 @@ drawDistnFounders3<-function(
 	} # end function
 
 dd <- Vectorize(drawDistnFounders3,'meanMe')
+###################################################################
 
 
+###################################################################
+# Function to generate synthetic data 
+###################################################################
+synthDat<-function(	pastN=testN,
+					pVals=testDat[,2],
+					Me=1,
+					sampleSize=20,
+					numLoci=5){
+		nGens <- length(pastN)
+		resList <- list()
+		for (i in 1:numLoci){
+			obs <- rmultinom(1,pastN[nGens],pVals)
+			for (gen in (nGens-1):1) obs <- rmultinom(1,pastN[gen],obs/sum(obs))
+			obs <- rmultinom(1,sampleSize,obs/sum(obs))
+			resList[[i]] <- cbind(obs,pVals)
+			}
+		return(resList)
+		}				
+
+					
