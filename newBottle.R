@@ -4,6 +4,8 @@ source('~/Dropbox/Research by person/Jim Groombridge/bottleneckFunctions.R', chd
 
 genDat<-read.csv('~/Dropbox/Research by person/jim groombridge/RNP Allele data.csv')
 
+# test data
+rmultinom(1,12,rmultinom(1,6,rmultinom(1,3,testDat[,2])))
 
 # Initial visualisation of the differentiation from other populations
 fValues	 <- 1:600/1000	# Fst range
@@ -54,6 +56,7 @@ for (s in c(0,6,12)){
 			text(x=0.34,y=-1-p*0.8,popNames[p+s],col=colourNums[3+p])		
 }		
 }
+
 #pop<-5 # Wiesbaden
 #pastN<-c(1950,517,370,124,22,2)
 

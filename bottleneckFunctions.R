@@ -30,31 +30,6 @@ lmdL<-Vectorize(lmd,'f')
 
 
 ##########################################################
-# Function return cutVals, which are values at which
-# sum of x up to cutVals comprises cuts of the total 
-# Used to return the levels used by contour-plotting function
-##########################################################
-##########################################################
-
-returnCuts<-function(x,cuts,require_unique=T){
-	sx<-sort(x)
-	cs<-cumsum(sx)/sum(sx)
-	cutVals<-rep(0,length(cuts))
-	for (i in 1:length(cuts)) {
-		cutVals[i]<-sx[min(which(cs>=cuts[i]))]
-		}
-	
-	# code to break ties by subtracting a small amount
-	# from the 1st value (ties are not allowed by filled.contour)
-	if (require_unique) {
-		for (i in length(cutVals):2)
-		if (cutVals[i-1]>=cutVals[i])
-		cutVals[i-1]<-cutVals[i]-abs(max(cutVals)/10^5)
-		}
-	return(cutVals)
-}
-
-##########################################################
 # Fuction to draw number of surviving lineages for given 
 #	number of lineages
 # 	number of alleles
@@ -140,7 +115,7 @@ testDat <- cbind(
 			c(0,7,0,5,9,0,0,0),
 			c(rep(0.2/6,6),0.4,0.4))
 dimnames(testDat)<-list(NULL,c('counts','freqs'))			
-testF <- c(1:5/100)
+testF <- c(0:4/100)
 testN <- c(12,6,3)
 ###################################################################
 # Function to return the likelihood of an array of allele counts 
@@ -236,16 +211,17 @@ drawDistnFounders3<-function(
 			ancestAlleles 	<- ancestAlleles - migrants
 			
 			# for next gen start from the remaining ancestors
-			print(ancestAlleles)
+			# test: print(migrants);print(ancestAlleles);print(draw$uG);writeLines('')
 			} # gen
 		
 		
 			
 	
-	print('\n');print(migAlleles)
+	# test writeLines('');print(migAlleles)
 	
-	print(uP)
-	print(lmdL(a=migAlleles,f=Fst,p=gData[,2]))	
+	# test print(uP)
+	# test print(lmdL(a=migAlleles,f=Fst,p=gData[,2]))
+	# test writeLines('')	
 	
 	denom <-denom + 1
 	numer <-numer + 
