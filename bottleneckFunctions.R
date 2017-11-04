@@ -1,5 +1,5 @@
 # Functions needed for analysis of bottlenecks with migration
-
+library(VGAM)
 ##########################################################
 # Log multinomial dirichlet calculation of the  
 # likelihood of allelic composition 
@@ -271,20 +271,38 @@ dd <- Vectorize(drawDistnFounders3,'meanMe')
 ###################################################################
 # Function to generate synthetic data 
 ###################################################################
-synthDat<-function(	pastN=testN,
-					pVals=testDat[,2],
-					Me=1,
-					sampleSize=20,
-					numLoci=5){
+synthDat<-function(	
+					pastN=testN,  		# haploid population sizes (whole number)
+					pVals=testDat[,2],	# global allele frequencies
+					Me=1,				# haploid number of migrants
+					Fst=0.01,			# variation around global frequencies
+					sampleSize=20,	
+					numLoci=5
+					){				
 		nGens <- length(pastN)
+		if (Me>min(pastN[-nGens])) stop('Me is larger than a population')
 		resList <- list()
 		for (i in 1:numLoci){
-			obs <- rmultinom(1,pastN[nGens],pVals)
-			for (gen in (nGens-1):1) obs <- rmultinom(1,pastN[gen],obs/sum(obs))
+			if (Fst==0) {
+				p <- pVals
+			} else {
+				# draw local p values from the dirichlet
+				p <- rdiric(1,pVals*(1-Fst)/Fst)
+				}
+			# draw the founder population	
+			obs <- rmultinom(1,pastN[nGens],p)
+			for (gen in (nGens-1):1) {
+				migrants <- rbinom(1,pastN[gen],Me/pastN)
+				residents <- pastN[gen]-migrants
+				print(c(gen,' ',obs,' m=', migrants,' r=',residents))
+				obs <-  (rmultinom(1,residents,obs/sum(obs))
+						 +rmultinom(1,migrants,p)
+						 )	
+				}# for gen		
 			obs <- rmultinom(1,sampleSize,obs/sum(obs))
 			resList[[i]] <- cbind(obs,pVals)
-			}
+			}# for locus i
 		return(resList)
-		}				
+		}# function				
 
 					
