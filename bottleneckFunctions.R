@@ -99,15 +99,13 @@ drawCoal <- function(counts=testCounts,nAncest=4,u=10^-2){
 	# otherwise simulate required no coalescent events
 	uG=0	
 	for (i in 1:(nLineages-nAncest)) {
-		nSame <- choose(counts,2)
-		nDiff <- counts*(nLineages-counts)/2
-		sProb <- nSame/(sum(nSame+nDiff))*(1-u)
-		dProb <- nDiff/(sum(nSame+nDiff))*u
-		tProb <- sProb+dProb
-		# uG <- uG + log(sum(sProb)+sum(dProb))
-		choice <- sample(aNos, 1, prob=tProb)
-		counts[choice] <- counts[choice] -1 	
-		uG <- uG + log(tProb[choice]/sum(tProb))
+		choice <- sample(aNos, 1, prob=counts)
+		counts[choice] <- counts[choice] -1
+		same <- counts[choice]
+		diff <- sum(counts[-choice])
+		pObs <- (same*(1-u) + diff*u)/(same+diff)
+		uG <- uG + log(pObs)
+		 	
 	}
 	return(list(uG=uG,ancest=counts))
 }
