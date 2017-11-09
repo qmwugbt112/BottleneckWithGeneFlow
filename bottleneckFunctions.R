@@ -103,9 +103,11 @@ drawCoal <- function(counts=testCounts,nAncest=4,u=10^-2){
 		nDiff <- counts*(nLineages-counts)/2
 		sProb <- nSame/(sum(nSame+nDiff))*(1-u)
 		dProb <- nDiff/(sum(nSame+nDiff))*u
-		uG <- uG + log(sum(sProb)+sum(dProb))
-		choice <- sample(aNos, 1, prob=sProb+dProb)
+		tProb <- sProb+dProb
+		# uG <- uG + log(sum(sProb)+sum(dProb))
+		choice <- sample(aNos, 1, prob=tProb)
 		counts[choice] <- counts[choice] -1 	
+		uG <- uG + log(tProb[choice]/sum(tProb))
 	}
 	return(list(uG=uG,ancest=counts))
 }
@@ -272,7 +274,7 @@ dd <- Vectorize(drawDistnFounders3,'meanMe')
 # Function to generate synthetic data 
 ###################################################################
 synthDat<-function(	
-					pastN=testN,  		# haploid population sizes (whole number)
+					pastN=testN,  		# haploid population sizes (whole numbers)
 					pVals=testDat[,2],	# global allele frequencies
 					Me=1,				# haploid number of migrants
 					Fst=0.01,			# variation around global frequencies
@@ -294,7 +296,7 @@ synthDat<-function(
 			for (gen in (nGens-1):1) {
 				migrants <- rbinom(1,pastN[gen],Me/pastN)
 				residents <- pastN[gen]-migrants
-				print(c(gen,' ',obs,' m=', migrants,' r=',residents))
+				# test line print(c(gen,' ',obs,' m=', migrants,' r=',residents))
 				obs <-  (rmultinom(1,residents,obs/sum(obs))
 						 +rmultinom(1,migrants,p)
 						 )	
@@ -305,4 +307,34 @@ synthDat<-function(
 		return(resList)
 		}# function				
 
-					
+###################################################################
+# Function to plot likelihood curves.
+###################################################################
+
+plotLike <- function(resList,					# List of likelihood matrixes
+					 xvals=1:ncol(resList[[1]])		# Parameter values for each col	
+					){
+	
+	# utility function to add members of a list
+	cadd <- function(x) Reduce('+', x)
+	
+	# obtain a list of log likelihood values
+	tt <- lapply(resList,log)
+	# add them
+	resMat <- cadd(tt)
+	
+	# combRes <- colSums(exp(allLoci))
+
+	nr <- nrow(resMat)
+	plot(xvals, resMat[1,], 
+		type='l', 
+		ylim=c(min(resMat),max(resMat)),
+		main='Likelihood curves',
+		ylab='Log likelihood',
+		xlab='Migrants'
+		
+		)
+	for(i in 2:nr) lines(xvals,resMat[i,],col=rainbow(nrow(allLoci))[i])					
+	
+}
+

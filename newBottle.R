@@ -1,61 +1,24 @@
+source('~/github/BottleneckWithGeneFlow/bottleneckFunctions.R', chdir = TRUE)
 
-source('~/Dropbox/Research by person/Jim Groombridge/bottleneckFunctions.R', chdir = TRUE)
 # Read in genetic data ###
-
-genDat<-read.csv('~/Dropbox/Research by person/jim groombridge/RNP Allele data.csv')
+genDat<-read.csv('~/github/BottleneckWithGeneFlow/RNP Allele data.csv')
 
 # test data
-rmultinom(1,12,rmultinom(1,6,rmultinom(1,3,testDat[,2])))
+tDat <- synthDat(numLoci=20)
 
-# Initial visualisation of the differentiation from other populations
-fValues	 <- 1:600/1000	# Fst range
-numPops <- 18
+pt <- proc.time()
+testM <- lapply(tDat,
+				function(x) dd(
+					gData=x,
+					meanMe=seq(0,6,,10),
+					Fst=testF,
+					pastN=testN,
+					uRate=10^-5,
+					nGenealogies=10^3)				
+				)
+proc.time()-pt
 
-likeCurves <- matrix(0,numPops,length(fValues))
-
-for (p in 1:numPops){
-	c<-2+p
-	# the 1 will generate Laplace estimates when normalized
-	pVals<-rowSums(genDat[,-(c(1:2,p))])+1
-	for (loc in levels(genDat$Locus)){
-		choice <- genDat$Locus==loc
-		pVec <- pVals[choice]
-		pVec <- pVec/sum(pVec)
-		aVec <- genDat[choice,c]
-		# test for low sample size bias
-		if (sum(aVec)>0){nAlleles <- sum(choice)
-			subVec <- sample(1:nAlleles,
-							size=4,
-							prob=aVec,
-							replace=T)
-			aVec <- rowSums(diag(nAlleles)[,subVec])
-			}					
-		likeCurves[p,] <- likeCurves[p,] + lmdL(aVec,fValues,pVec)
-	}			
-}
-
-popNames <- names(genDat)[-(1:2)]
-nPops <- length(popNames)
-colourNums <- rainbow(9)
-
-par(mfrow=c(3,1))
-for (s in c(0,6,12)){
- plot(	fValues,
-		likeCurves[s+1,]-max(likeCurves[s+1,]),
-		ylim=c(-6,0),
-		type='l',
-		ylab='Support (log likelihood)',
-		xlab='Fst',
-		main='Likelihood curves for Fst (each city vs rest)',
-		col=colourNums[3+1])
- text(x=0.34,y=-1.8,popNames[s+1],col=colourNums[3+1])		
- for (p in 2:6){
-	 lines(	fValues,
-			likeCurves[p+s,]-max(likeCurves[p+s,]),
-			col=colourNums[3+p])
-			text(x=0.34,y=-1-p*0.8,popNames[p+s],col=colourNums[3+p])		
-}		
-}
+plotLike(testM,seq(0,6,,10))
 
 #pop<-5 # Wiesbaden
 #pastN<-c(1950,517,370,124,22,2)
