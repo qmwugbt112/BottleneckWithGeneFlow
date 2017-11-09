@@ -1,7 +1,8 @@
-source('~/github/BottleneckWithGeneFlow/bottleneckFunctions.R', chdir = TRUE)
+source('https://raw.githubusercontent.com/qmwugbt112/BottleneckWithGeneFlow/master/bottleneckFunctions.R')
 
-# Read in genetic data ###
-genDat<-read.csv('~/github/BottleneckWithGeneFlow/RNP Allele data.csv')
+# print out default parameters
+testN
+testF
 
 # test data
 tDat <- synthDat(numLoci=20)
@@ -19,6 +20,11 @@ testM <- lapply(tDat,
 proc.time()-pt
 
 plotLike(testM,seq(0,6,,10))
+
+# ********** Try to here ***************************************
+
+# Read in genetic data ###
+genDat<-read.csv('~/github/BottleneckWithGeneFlow/RNP Allele data.csv')
 
 #pop<-5 # Wiesbaden
 #pastN<-c(1950,517,370,124,22,2)
