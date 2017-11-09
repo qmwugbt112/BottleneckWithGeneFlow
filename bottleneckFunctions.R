@@ -334,7 +334,7 @@ plotLike <- function(resList,					# List of likelihood matrixes
 		xlab='Migrants'
 		
 		)
-	for(i in 2:nr) lines(xvals,resMat[i,],col=rainbow(nrow(allLoci))[i])					
+	for(i in 2:nr) lines(xvals,resMat[i,],col=rainbow(nr)[i])					
 	
 }
 
