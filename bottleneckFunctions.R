@@ -113,7 +113,7 @@ drawCoal <- function(counts=testCounts,nAncest=4,u=10^-2){
 #################################################
 testDat <- cbind(
 			c(0,0,0,7,0,5,9,0,0,0),
-			c(rep(0.2/6,6),0.1,0.1,0.2,0.3))
+			c(rep(0.05/3,3),rep(0.25/3,3),0.1,0.1,0.2,0.3))
 dimnames(testDat)<-list(NULL,c('counts','freqs'))			
 testF <- c(0:4/100)
 testN <- c(12,6,3)
