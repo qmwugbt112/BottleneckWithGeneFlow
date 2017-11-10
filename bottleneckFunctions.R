@@ -83,7 +83,7 @@ calcPrior<-function(xvals,			# values for mean migrants
 # which allows coalescence between non-alleles
 ##########################################################
 
-drawCoal <- function(counts=testCounts,nAncest=4,u=10^-2){
+drawCoal <- function(counts=testCounts,nAncest=4,u=10^-4){
 	nLineages <- sum(counts)
 	nAlleles <- length(counts)
 	aNos <- c(1:nAlleles)	# used in sampling
@@ -99,13 +99,26 @@ drawCoal <- function(counts=testCounts,nAncest=4,u=10^-2){
 	# otherwise simulate required no coalescent events
 	uG=0	
 	for (i in 1:(nLineages-nAncest)) {
-		choice <- sample(aNos, 1, prob=counts)
-		counts[choice] <- counts[choice] -1
-		same <- counts[choice]
-		diff <- sum(counts[-choice])
-		pObs <- (same*(1-u) + diff*u)/(same+diff)
-		uG <- uG + log(pObs)
-		 	
+		
+		# count pairs of lineages carrying the same allele
+		hom <- choose(counts,2)
+		
+		# count pairs carrying different alleles
+		het <- counts*(sum(counts)-counts)/2
+		
+		# count allowed coalescents after mutation/miscoring
+		okc <- (1-u)*hom + u*(het)
+		
+		# proportion of coalescences yielding observed data
+		uG <- uG + log(sum(okc)) -log(sum(hom+het))
+		
+		# choose an lineage to coalesce from those allowed 
+		choice <- rmultinom(1, 1, prob=okc/sum(okc))
+		
+		# take that lineage from the total
+		counts <- counts-choice
+		
+				 	
 	}
 	return(list(uG=uG,ancest=counts))
 }
@@ -117,6 +130,7 @@ testDat <- cbind(
 dimnames(testDat)<-list(NULL,c('counts','freqs'))			
 testF <- c(0:4/100)
 testN <- c(12,6,3)
+
 ###################################################################
 # Function to return the likelihood of an array of allele counts 
 # from one locus Gdata[,1],in a subpopulation of a metapopulation.
@@ -127,23 +141,33 @@ testN <- c(12,6,3)
 # Genealogies are traced back until a founding generation, when ancestral
 # allele frequencies are treated as multinomial dirichlet distributed.
 # The distribution is specified by the metapopulation allele 
-# frequencies and Fst.  Migrants are drawn from the same distribution.
+# frequencies and Fst.  Migrants are drawn from the same distribution
+# as the founders.
 # If Fst is an array, the function returns a likelihood estimate 
 # for each Fst value
 ###################################################################
+
 drawDistnFounders3<-function(
 	Ne2N=0.5,			# ratio of Ne to census size
 	meanMe=2.1,			# the average no diploid migrants per gen (uncorrected to Ne)
 	Fst=testF,			# vector of Fst: var(ancestral freq) around metapop mean
-	pastN=testN,		# a vector of diploid census counts (present to founding)
+	pastN=testN,		# Census counts (of diploids) each gen. (present to founding)
 	gData=testDat,		# matrix 	1st col counts of each allele 
 						#			2nd col allele frequency (metapopulation) 
-	uRate=10^-2,		# relative prob non-alllelic coalescence (error & mutn.)
-	nGenealogies=10^3,	# number of samples to draw
-	convergePlot=F		# produce plot to assess number of samples needed
+	uRate=10^-4,		# relative prob non-alllelic coalescence (error & mutn.)
+	nGenealogies=10^3	# number of samples to draw
 	){
-	# Check allele array does not contain zero values
+	
+	# Check allele freq array does not contain zero values
 	if (any(gData[,2]==0)) stop("Allele frequencies must be non-zero")
+	
+	# Check allele frequencies sum to one, correct and warn otherwise
+	if (sum(gData[,2])!=1) {
+		warning('Allele frequencies do not sum to 1')
+		print(gData[,2])
+		print(c('sum= ',sum(gData[,2])),quote=FALSE)
+		gData[,2] <- gData[,2]/sum(gData[,2])
+	}
 	
 		
 	# Inital calculations from input variables
@@ -163,14 +187,6 @@ drawDistnFounders3<-function(
 	}
 
 	
-			
-	# Set to zero the variables to store running totals 
-	# if covergence is being monitored
-	if (convergePlot){ # detailed samples to monitor convergence
-		dG<-matrix(0,nrow=nGenealogies,ncol=length(Fst))
-		nG<-matrix(0,nrow=nGenealogies,ncol=length(Fst))
-		}
-		
 	# numerator and denominator of the estimates 
 	# (one for each Fst value)	
 	numer <-rep(0,length(Fst)) 
@@ -186,10 +202,12 @@ drawDistnFounders3<-function(
 		# zero the probability count
 		uP<-0	
 		
+		# start with the observed allele frequencies	
 		ancestAlleles <- gData[,1]
+		
 		for (gen in 1:nGens){
 
-		
+			# draw the number of ancestral lineages		
 			ancestNo <- drawNoAncest( counts=ancestAlleles,
 										   Ne=Ne[gen])
 			
@@ -214,15 +232,6 @@ drawDistnFounders3<-function(
 			# test: print(migrants);print(ancestAlleles);print(draw$uG);writeLines('')
 			} # gen
 		
-		
-			
-	
-	# test writeLines('');print(migAlleles)
-	
-	# test print(uP)
-	# test print(lmdL(a=migAlleles,f=Fst,p=gData[,2]))
-	# test writeLines('')	
-	
 	denom <-denom + 1
 	numer <-numer + 
 				exp(uP +
@@ -230,38 +239,9 @@ drawDistnFounders3<-function(
 							f=Fst,
 							p=gData[,2])
 					)
-	
-	
-	# Keep running totals for convergence monitoring
-	if (convergePlot){
-		dG[iter,]<-denom							
-		nG[iter,]<-numer
-		}
-	
-	
 	} # end each genealogy
-	
-	
-	if (convergePlot){ # plot graphs to show convergence
-		halfway<-nGenealogies%/%2
-		yTop<-max(log(nG/dG)[halfway:nGenealogies,]
-					,na.rm=T)*0.9
-		yBot<-min(log(nG/dG)[halfway:nGenealogies,]
-					,na.rm=T)*1.1
-		plot(	1:nGenealogies,log(nG/dG)[,1],
-				ylim=c(yBot,yTop),
-				type='l',
-				main="Convergence of likelihood estimate",
-				ylab='Estimate',
-				xlab='Sample Size (nGenealogies)')
-		if ( length(Fst)>1)for (j in 2:length(Fst)) {
-			lines(1:nGenealogies,log(nG/dG)[,j],col=j)
-			}
-			
-		}
 		
-	return(ratio=numer/denom)
-			
+	return(ratio=numer/denom)		
 	} # end function
 
 dd <- Vectorize(drawDistnFounders3,'meanMe')
@@ -310,17 +290,20 @@ synthDat<-function(
 ###################################################################
 
 plotLike <- function(resList,					# List of likelihood matrixes
-					 xvals=1:ncol(resList[[1]])		# Parameter values for each col	
+					 xvals=1:ncol(resList[[1]]),		# Parameter values for each col	
+					 subrange=1:length(resList),		# which values to combine
+					 scale=FALSE						# subtract ML value						
 					){
 	
 	# utility function to add members of a list
 	cadd <- function(x) Reduce('+', x)
 	
 	# obtain a list of log likelihood values
-	tt <- lapply(resList,log)
+	tt <- lapply(resList[subrange],log)
 	# add them
 	resMat <- cadd(tt)
-	
+	if (scale) resMat <- resMat-max(resMat)
+
 	# combRes <- colSums(exp(allLoci))
 
 	nr <- nrow(resMat)
